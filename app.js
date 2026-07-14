@@ -1,14 +1,21 @@
 'use strict';
 
+// Bump this on every meaningful change. It's just a plain string (no build
+// step generates it) -- shown in the top bar so you can tell, after a push,
+// once a given phone has actually picked up the new deploy (GitHub Pages
+// propagation + this app's own service-worker caching both add a delay).
+const APP_VERSION = '2026-07-14.1';
+
 /* ---------- config ---------- */
 
-// Restrict OCR to characters actually used on decals. Includes lowercase
-// even though matching normalizes to uppercase -- if the whitelist excludes
-// a character that's actually on the decal (e.g. decals use mixed case),
-// Tesseract can't skip it, it's forced to guess the closest *allowed*
-// character, which often produces garbage. Widen further (or set to null)
-// if decals use other characters (e.g. accented letters).
-const OCR_CHAR_WHITELIST = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789- ';
+// Restrict OCR to characters actually used on decals -- letters only (no
+// digits), per the fleet's naming convention. Includes lowercase even
+// though matching normalizes to uppercase -- if the whitelist excludes a
+// character that's actually on the decal, Tesseract can't skip it, it's
+// forced to guess the closest *allowed* character, which often produces
+// garbage. Widen this (or set to null) if decals ever use other characters
+// (digits, accented letters, etc).
+const OCR_CHAR_WHITELIST = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz- ';
 
 // Tesseract's default page-segmentation mode assumes a full multi-column
 // document and tries to detect its layout -- a well-known cause of garbage
@@ -76,7 +83,7 @@ const els = {};
   'statusOverlay', 'resultContent', 'notFoundContent', 'ambiguousContent',
   'resultName', 'resultEpicKey', 'resultAction', 'fuzzyNotice', 'ticketList',
   'notFoundText', 'ambiguousText', 'ambiguousCandidates', 'ambiguousRsvBtn',
-  'counterValue', 'resetCounterBtn', 'syncStatus', 'muteBtn', 'loopDot',
+  'counterValue', 'resetCounterBtn', 'syncStatus', 'muteBtn', 'loopDot', 'appVersion',
 ].forEach((id) => { els[id] = document.getElementById(id); });
 
 /* ---------- normalization + fuzzy matching ---------- */
@@ -477,6 +484,7 @@ els.manualInput.addEventListener('input', (e) => renderManualResults(e.target.va
 /* ---------- init ---------- */
 
 async function init() {
+  els.appVersion.textContent = `v${APP_VERSION}`;
   setCounter(getCounter());
   setMuted(muted);
   await loadRobots();

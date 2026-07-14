@@ -132,6 +132,17 @@ slip through as confident matches.
 The app is entirely static — `robots.json` is just a file the sync script
 overwrites, no backend required.
 
+### Confirming a deploy actually landed
+
+The top-right corner shows a small `vYYYY-MM-DD.N` build string
+(`APP_VERSION` in `app.js`). There's no build step generating it — it's a
+plain hardcoded string, bumped by hand on every meaningful change. Since
+both GitHub Pages propagation *and* this app's own service-worker caching
+(stale-while-revalidate) can delay a phone from seeing the latest code
+after a push, this is the simplest way to confirm a given phone has
+actually picked it up: reload the page and check the version matches what
+you just pushed.
+
 ## Data exposure if this repo (or its Pages site) is public
 
 Everything committed here — including every past commit, not just the
