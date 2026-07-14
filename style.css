@@ -107,7 +107,9 @@ body {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  transform: scaleX(-1); /* mirror the preview so it feels like a selfie mirror */
+  /* Not mirrored: this is a text-reading tool, not a face selfie -- the
+     agent needs to see the decal in its true orientation to judge whether
+     it's aligned and upright, not flipped for "mirror" comfort. */
 }
 
 .guide-box {

@@ -18,6 +18,15 @@ const FUZZY_MAX_DISTANCE_RATIO = 0.25;
 // or missing letters in this fleet.
 const CONFUSABLE_DISTANCE_GAP = 2;
 
+// Some browsers/platforms deliver the front camera's MediaStream already
+// mirrored at the frame-data level (independent of any CSS on the <video>
+// element) -- this is inconsistent across browsers. If OCR keeps reading
+// backwards text, this is the fix; flip it off if a device turns out to
+// deliver a true (non-mirrored) stream and this makes things worse. Check
+// the live "Last read" text under the camera view to tell which case you're
+// in after changing this.
+const FLIP_CAPTURE_HORIZONTALLY = true;
+
 const COUNTER_KEY = 'decalScanner.counter';
 const MUTED_KEY = 'decalScanner.muted';
 
@@ -165,8 +174,9 @@ async function startCamera() {
 
 // Maps the on-screen guide box (CSS pixels, drawn over a video element using
 // object-fit: cover) back into source-video pixel coordinates, accounting
-// for the cover-crop. The video itself is not mirrored in the underlying
-// frame data -- only the CSS preview is -- so no un-mirroring is needed here.
+// for the cover-crop. This is layout-box math (clientWidth/clientHeight,
+// getBoundingClientRect()), which CSS transforms like a mirror don't affect
+// -- so it's correct regardless of FLIP_CAPTURE_HORIZONTALLY below.
 function guideBoxToVideoRect() {
   const video = els.video;
   const vw = video.videoWidth, vh = video.videoHeight;
@@ -197,16 +207,26 @@ function guideBoxToVideoRect() {
 function captureGuideBoxFrame() {
   const rect = guideBoxToVideoRect();
   const canvas = els.canvas;
+  let sx, sy, sw, sh;
   if (!rect || rect.w <= 0 || rect.h <= 0) {
     canvas.width = els.video.videoWidth || 640;
     canvas.height = els.video.videoHeight || 480;
-    canvas.getContext('2d').drawImage(els.video, 0, 0);
-    return canvas;
+    sx = 0; sy = 0; sw = canvas.width; sh = canvas.height;
+  } else {
+    canvas.width = rect.w;
+    canvas.height = rect.h;
+    sx = rect.x; sy = rect.y; sw = rect.w; sh = rect.h;
   }
-  canvas.width = rect.w;
-  canvas.height = rect.h;
+
   const ctx = canvas.getContext('2d');
-  ctx.drawImage(els.video, rect.x, rect.y, rect.w, rect.h, 0, 0, rect.w, rect.h);
+  if (FLIP_CAPTURE_HORIZONTALLY) {
+    ctx.save();
+    ctx.scale(-1, 1);
+    ctx.drawImage(els.video, sx, sy, sw, sh, -canvas.width, 0, canvas.width, canvas.height);
+    ctx.restore();
+  } else {
+    ctx.drawImage(els.video, sx, sy, sw, sh, 0, 0, canvas.width, canvas.height);
+  }
   return canvas;
 }
 

@@ -82,6 +82,19 @@ the common case:
 Tuning knobs, all in `app.js`: `CONFIRM_FRAMES`, `EMPTY_RESET_FRAMES`,
 `LOOP_YIELD_MS` (delay between OCR attempts).
 
+### If OCR reads backwards/mirrored text
+
+The live preview intentionally does **not** mirror the front camera (unlike
+a face-selfie app) — showing the decal in its true orientation makes it
+easier to judge alignment. Independently, some browsers/platforms deliver
+the front camera's raw stream already mirrored at the frame level
+(inconsistent across devices), which would make Tesseract read backwards
+text. `FLIP_CAPTURE_HORIZONTALLY` in `app.js` (default `true`) flips the
+frame during OCR capture to correct for this, without affecting the live
+preview. Watch the "Last read" text under the camera view: if it's
+consistently backwards, leave this `true`; if turning it on made things
+*worse* on a given device, set it to `false`.
+
 ## Name matching
 
 OCR text is normalized (uppercase, letters/digits only) and matched against
