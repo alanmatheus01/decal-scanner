@@ -1,0 +1,52 @@
+{
+  "generated_at": "2026-07-14T00:00:00Z",
+  "source": "sample-data",
+  "robots": {
+    "ROVER-042": {
+      "name": "Rover-042",
+      "epic_key": "FLEET-58705",
+      "epic_status": "In Progress",
+      "location": "MIA-82nd",
+      "cone": "purple",
+      "action": "Connect to power and ethernet. Ensure offload begins.",
+      "reasons": ["Open Tech Support Service Request: FLEET-58658"],
+      "tickets": [
+        {
+          "key": "FLEET-58658",
+          "type": "Tech Support Service Request",
+          "status": "Open",
+          "summary": "Offload sensor logs",
+          "url": "https://example.atlassian.net/browse/FLEET-58658"
+        }
+      ]
+    },
+    "ROVER-013": {
+      "name": "Rover-013",
+      "epic_key": "FLEET-46085",
+      "epic_status": "In Progress",
+      "location": "MIA-20th",
+      "cone": "red",
+      "action": "Drop off in Fleet Management room.",
+      "reasons": ["Open Task: FLEET-46086"],
+      "tickets": [
+        {
+          "key": "FLEET-46086",
+          "type": "Task",
+          "status": "Open",
+          "summary": "Return to storage",
+          "url": "https://example.atlassian.net/browse/FLEET-46086"
+        }
+      ]
+    },
+    "ROVER-099": {
+      "name": "Rover-099",
+      "epic_key": "FLEET-45184",
+      "epic_status": "In Progress",
+      "location": "MIA-BrickFLL",
+      "cone": "green",
+      "action": "Connect to power and ethernet.",
+      "reasons": [],
+      "tickets": []
+    }
+  }
+}

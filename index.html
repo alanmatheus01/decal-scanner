@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0f1115">
+<title>Robot Decal Scanner</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="counter" id="counterWrap">
+    <span class="counter-label">Robots processed</span>
+    <span class="counter-value" id="counterValue">0</span>
+    <button id="resetCounterBtn" class="btn btn-ghost btn-small" title="Reset counter">Reset</button>
+  </div>
+  <div class="topbar-right">
+    <button id="muteBtn" class="btn btn-ghost btn-small" title="Toggle spoken feedback">&#128264;</button>
+    <span class="loop-dot" id="loopDot" title="Scanning"></span>
+    <div class="sync-status" id="syncStatus">Loading robots.json&hellip;</div>
+  </div>
+</header>
+
+<main class="stage">
+  <div class="camera-wrap" id="cameraWrap">
+    <video id="video" autoplay playsinline muted></video>
+    <div class="guide-box" id="guideBox"></div>
+    <div class="camera-hint" id="cameraHint">Hold the decal toward the camera</div>
+    <div class="ocr-live" id="ocrLive"></div>
+
+    <div id="statusOverlay" class="status-overlay">
+      <div id="resultContent" class="overlay-content" hidden>
+        <h2 id="resultName"></h2>
+        <p class="epic-key" id="resultEpicKey"></p>
+        <p class="action-text" id="resultAction"></p>
+        <div id="fuzzyNotice" class="fuzzy-notice" hidden>
+          Fuzzy match &mdash; double-check this is the right robot.
+        </div>
+        <details class="tickets-detail">
+          <summary>Ticket details</summary>
+          <ul id="ticketList" class="ticket-list"></ul>
+        </details>
+      </div>
+
+      <div id="notFoundContent" class="overlay-content" hidden>
+        <h2>Decal not recognized</h2>
+        <p class="action-text">
+          Create an RSV to replace this decal, then drop the robot off in the
+          Fleet Management room.
+        </p>
+        <p class="ocr-readout">Read: <span id="notFoundText"></span></p>
+      </div>
+
+      <div id="ambiguousContent" class="overlay-content" hidden>
+        <h2>Multiple close matches</h2>
+        <p class="action-text">
+          Tap the right one below, or create an RSV if you can't tell which.
+        </p>
+        <p class="ocr-readout">Read: <span id="ambiguousText"></span></p>
+        <ul id="ambiguousCandidates" class="manual-results"></ul>
+        <button id="ambiguousRsvBtn" class="btn btn-ghost">None of these &mdash; create RSV</button>
+      </div>
+
+      <div class="overlay-dismiss-hint">Tap anywhere to dismiss</div>
+    </div>
+  </div>
+
+  <canvas id="canvas" hidden></canvas>
+
+  <details class="manual-search">
+    <summary>Can't get a clean scan? Search by name</summary>
+    <input id="manualInput" type="text" placeholder="Type robot name&hellip;" autocomplete="off">
+    <ul id="manualResults" class="manual-results"></ul>
+  </details>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

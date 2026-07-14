@@ -1,0 +1,10 @@
+[Unit]
+Description=Sync robots.json from Jira and push to the decal-scanner repo
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=%h/decal-scanner
+EnvironmentFile=%h/.config/decal-scanner/env
+ExecStart=%h/decal-scanner/scripts/venv/bin/python %h/decal-scanner/scripts/sync_jira.py

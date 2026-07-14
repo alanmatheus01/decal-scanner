@@ -1,0 +1,345 @@
+:root {
+  --bg: #0f1115;
+  --panel: #1a1d24;
+  --text: #f2f3f5;
+  --muted: #9aa0ab;
+  --accent: #2563eb;
+  --purple: #7c3aed;
+  --red: #dc2626;
+  --green: #16a34a;
+  --attention: #f59e0b;
+  --unknown: #4b5563;
+  --border: #2a2e37;
+}
+
+* { box-sizing: border-box; }
+
+[hidden] { display: none !important; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  height: 100%;
+  overscroll-behavior: none;
+}
+
+body {
+  display: flex;
+  flex-direction: column;
+}
+
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 14px;
+  padding-top: max(10px, env(safe-area-inset-top));
+  background: var(--panel);
+  border-bottom: 1px solid var(--border);
+  font-size: 14px;
+}
+
+.topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.counter {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.counter-label { color: var(--muted); }
+.counter-value {
+  font-size: 20px;
+  font-weight: 700;
+  min-width: 1.5em;
+  text-align: center;
+}
+
+.sync-status {
+  color: var(--muted);
+  font-size: 12px;
+  text-align: right;
+}
+
+.loop-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--green);
+  opacity: 0.4;
+  flex-shrink: 0;
+}
+
+.loop-dot.busy {
+  opacity: 1;
+  box-shadow: 0 0 6px 2px var(--green);
+}
+
+.stage {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 14px;
+  gap: 14px;
+  overflow-y: auto;
+}
+
+.camera-wrap {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 3 / 4;
+  background: #000;
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+#video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform: scaleX(-1); /* mirror the preview so it feels like a selfie mirror */
+}
+
+.guide-box {
+  position: absolute;
+  top: 30%;
+  left: 10%;
+  right: 10%;
+  bottom: 30%;
+  border: 3px dashed rgba(255,255,255,0.85);
+  border-radius: 12px;
+  pointer-events: none;
+  box-shadow: 0 0 0 9999px rgba(0,0,0,0.35);
+}
+
+.camera-hint {
+  position: absolute;
+  bottom: 24px;
+  left: 8px;
+  right: 8px;
+  text-align: center;
+  font-size: 13px;
+  color: #fff;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.8);
+}
+
+.ocr-live {
+  position: absolute;
+  bottom: 6px;
+  left: 8px;
+  right: 8px;
+  text-align: center;
+  font-size: 11px;
+  font-family: ui-monospace, monospace;
+  color: rgba(255,255,255,0.75);
+  text-shadow: 0 1px 3px rgba(0,0,0,0.8);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* The status overlay sits on top of the live camera feed and fills it with
+   a solid, saturated color -- the point is that a cone color should be
+   readable at a glance from across a room, not just up close. It only
+   toggles opacity/pointer-events (never display), so the underlying video
+   element keeps decoding frames for OCR the whole time it's covered up. */
+.status-overlay {
+  position: absolute;
+  inset: 0;
+  border-radius: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 24px;
+  overflow-y: auto;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease, background-color 0.2s ease;
+  color: #fff;
+}
+
+.status-overlay.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.status-overlay.state-purple { background: var(--purple); }
+.status-overlay.state-red { background: var(--red); }
+.status-overlay.state-green { background: var(--green); }
+.status-overlay.state-attention { background: var(--attention); color: #201400; }
+
+.overlay-content h2 {
+  margin: 0 0 6px;
+  font-size: 30px;
+}
+
+.overlay-content .epic-key {
+  color: inherit;
+  opacity: 0.75;
+  margin: 0 0 18px;
+  font-family: ui-monospace, monospace;
+}
+
+.overlay-content .action-text {
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 1.35;
+  margin: 0 0 18px;
+  max-width: 26em;
+}
+
+.overlay-content .ocr-readout {
+  color: inherit;
+  opacity: 0.75;
+  font-size: 13px;
+  margin-bottom: 4px;
+}
+
+.overlay-dismiss-hint {
+  position: absolute;
+  bottom: 10px;
+  left: 0;
+  right: 0;
+  font-size: 11px;
+  opacity: 0.6;
+}
+
+.btn {
+  border: none;
+  border-radius: 12px;
+  padding: 12px 18px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  color: var(--text);
+  background: var(--panel);
+  border: 1px solid var(--border);
+}
+
+.btn-ghost {
+  background: transparent;
+}
+
+.btn-small {
+  padding: 6px 10px;
+  font-size: 12px;
+}
+
+.status-overlay .btn-ghost {
+  color: inherit;
+  border-color: rgba(255,255,255,0.5);
+}
+
+.status-overlay.state-attention .btn-ghost {
+  border-color: rgba(0,0,0,0.35);
+}
+
+.manual-search {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 10px 14px;
+  flex-shrink: 0;
+}
+
+.manual-search summary {
+  cursor: pointer;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+#manualInput {
+  width: 100%;
+  margin-top: 10px;
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text);
+  font-size: 15px;
+}
+
+.manual-results {
+  list-style: none;
+  margin: 8px 0 0;
+  padding: 0;
+  max-height: 160px;
+  overflow-y: auto;
+  text-align: left;
+}
+
+.overlay-content .manual-results {
+  margin: 6px 0 16px;
+  max-width: 20em;
+  background: rgba(0,0,0,0.15);
+  border-radius: 10px;
+}
+
+.manual-results li {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+}
+
+.overlay-content .manual-results li {
+  border-bottom: 1px solid rgba(255,255,255,0.2);
+}
+
+.manual-results li:active {
+  background: var(--border);
+}
+
+.overlay-content .manual-results li:active {
+  background: rgba(0,0,0,0.25);
+}
+
+.fuzzy-notice {
+  background: rgba(0,0,0,0.3);
+  color: #fff;
+  border: 1px solid rgba(255,255,255,0.4);
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-size: 13px;
+  margin-bottom: 16px;
+}
+
+.tickets-detail {
+  text-align: left;
+  color: inherit;
+}
+
+.tickets-detail summary {
+  cursor: pointer;
+  opacity: 0.75;
+  font-size: 13px;
+}
+
+.ticket-list {
+  list-style: none;
+  margin: 10px 0 0;
+  padding: 0;
+  font-size: 13px;
+  max-width: 24em;
+}
+
+.ticket-list li {
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.2);
+}
+
+.ticket-list a {
+  color: inherit;
+  text-decoration: underline;
+}
