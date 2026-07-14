@@ -50,17 +50,21 @@ JIRA_BASE_URL = os.environ.get("JIRA_BASE_URL", "").rstrip("/")
 JIRA_EMAIL = os.environ.get("JIRA_EMAIL", "")
 JIRA_API_TOKEN = os.environ.get("JIRA_API_TOKEN", "")
 
-# Epics: one per robot. Defaults match the fleet's current filter.
+# Epics: one per robot. The placeholder default below deliberately doesn't
+# work as-is -- your real project/field/site names are org-internal
+# structure, so they're configured the same way as the API token: set via
+# JIRA_EPIC_JQL in your environment or ~/.config/decal-scanner/env, never
+# committed to this (potentially public) repo.
 JIRA_EPIC_JQL = os.environ.get(
     "JIRA_EPIC_JQL",
-    'project = FLEET AND type = Epic AND "rover location[dropdown]" IN '
-    '(MIA-82nd, MIA-20th, MIA-BrickFLL, "MIA-82nd Storage")',
+    'project = YOUR_PROJECT AND type = Epic AND "your rover-location field[dropdown]" IN '
+    '(YOUR_SITE_A, YOUR_SITE_B)',
 )
 
 # Child tickets: fetched in batches of `parent IN (...)` scoped to the epic
 # keys found above, restricted to open (non-Done) tickets of the types that
-# drive cone color.
-JIRA_CHILD_PROJECTS = os.environ.get("JIRA_CHILD_PROJECTS", "Fleet,RFLEET")
+# drive cone color. Same deal -- set the real project key(s) via env.
+JIRA_CHILD_PROJECTS = os.environ.get("JIRA_CHILD_PROJECTS", "YOUR_PROJECT")
 JIRA_CHILD_TYPES = os.environ.get(
     "JIRA_CHILD_TYPES",
     "Robot Calibration,Oncall - Tier 1,Tech Support Service Request,Task",
@@ -162,7 +166,12 @@ def fetch_child_tickets(session: requests.Session, epic_keys: list[str]) -> dict
             f"project IN ({projects}) AND parent IN ({parents}) "
             f"AND type IN ({types}) AND statusCategory != Done"
         )
-        issues = jira_search(session, jql, ["summary", "status", "issuetype", "parent"])
+        # Deliberately not fetching "summary": it's free text written by
+        # staff and could contain anything, the UI never displays it, and
+        # robots.json is world-readable once this repo (or its Pages site)
+        # is public. Same reasoning for not building a Jira browse URL here,
+        # which would otherwise bake the org's Jira domain into a public file.
+        issues = jira_search(session, jql, ["status", "issuetype", "parent"])
         for issue in issues:
             fields = issue["fields"]
             parent_key = (fields.get("parent") or {}).get("key")
@@ -173,8 +182,6 @@ def fetch_child_tickets(session: requests.Session, epic_keys: list[str]) -> dict
                     "key": issue["key"],
                     "type": fields["issuetype"]["name"],
                     "status": fields["status"]["name"],
-                    "summary": fields.get("summary", ""),
-                    "url": f"{JIRA_BASE_URL}/browse/{issue['key']}",
                 }
             )
     total = sum(len(v) for v in by_epic.values())

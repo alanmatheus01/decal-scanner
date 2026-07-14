@@ -111,12 +111,41 @@ slip through as confident matches.
 
 ## Deploying the PWA to GitHub Pages
 
-1. Push this repo to GitHub.
+1. Push this repo to GitHub. **GitHub Pages requires a public repo on the
+   free tier** — see "Data exposure" below before flipping visibility.
 2. Repo Settings → Pages → Deploy from branch → `main` / `(root)`.
 3. Camera access requires HTTPS, which GitHub Pages provides by default.
 
 The app is entirely static — `robots.json` is just a file the sync script
 overwrites, no backend required.
+
+## Data exposure if this repo (or its Pages site) is public
+
+Everything committed here — including every past commit, not just the
+latest — becomes world-readable the moment the repo goes public, whether or
+not the Pages site is enabled. Before flipping visibility:
+
+- **`robots.json` only ever contains**: robot name, epic key/status, cone
+  color + action text, and (for each open ticket) its key/type/status. It
+  deliberately does **not** include a ticket's `summary` (free text written
+  by staff — could say anything) or a `url` (which would bake your Jira
+  Cloud subdomain into a public file). Neither is used by the UI, so
+  dropping them from `scripts/sync_jira.py`'s output cost nothing. If you
+  ever add fields back to that ticket dict, ask whether they're meant to be
+  public first.
+- **Your real Jira project keys, custom field names, and site/location
+  names are treated like credentials** — they only ever live in your own
+  `JIRA_EPIC_JQL` / `JIRA_CHILD_PROJECTS` env vars (see "Credentials"
+  below), never as defaults in this repo's source. The in-repo defaults
+  are non-working placeholders on purpose.
+- Robot names (== Jira Epic summaries == whatever's printed on the decal)
+  are published as-is, since they're already physically visible on the
+  robots. Double check your naming convention doesn't encode anything more
+  sensitive than a callsign.
+- If this repo has already been pushed while public at any point, treat
+  anything it contained as permanently disclosed — deleting or
+  force-pushing over history doesn't retract copies already cloned/cached/
+  crawled. Scrub before the first public push, not after.
 
 ## Credentials: kept outside the repo
 
@@ -166,11 +195,14 @@ dry run that writes `robots.json` locally without committing/pushing.
 
 ### Config knobs (all optional, see `scripts/env.example`)
 
-- `JIRA_EPIC_JQL` — which Epics count as robots. Defaults to the current
-  fleet filter (`project = FLEET AND type = Epic AND "rover location[dropdown]"
-  IN (...)`).
+- `JIRA_EPIC_JQL` — which Epics count as robots. The in-repo default is a
+  non-working placeholder on purpose (see "Credentials" above) — your real
+  project key, custom field name, and site names are org-internal
+  structure, so set the real JQL via this env var, never in committed
+  source.
 - `JIRA_CHILD_PROJECTS` / `JIRA_CHILD_TYPES` — which projects/issue types are
-  considered when computing cone color.
+  considered when computing cone color. Same deal for `JIRA_CHILD_PROJECTS`
+  (your real project key) — set it via env, not in the repo.
 - `JIRA_EPIC_CHUNK_SIZE` — how many epic keys go into each `parent IN (...)`
   batch query (Jira has practical limits on JQL clause size).
 - `REPO_DIR` — local clone the script commits into (defaults to the repo
@@ -211,10 +243,10 @@ Run it on demand with `systemctl --user start jira-robot-sync.service`.
 
 ## Notes / things to double check for your Jira instance
 
-- `"rover location[dropdown]"` in the epic JQL is the field's JQL clause
-  name in this workspace — if it doesn't resolve, find the actual clause
-  name/custom field ID under Jira admin → Custom fields, and override via
-  `JIRA_EPIC_JQL`.
+- Your dropdown/location custom field's JQL clause name is workspace
+  specific — find it (and its custom field ID, if the clause name doesn't
+  resolve) under Jira admin → Custom fields, and put the real JQL in
+  `JIRA_EPIC_JQL` via env, not in this repo.
 - The child-ticket query filters to `statusCategory != Done`, i.e. only
   currently-open tickets affect cone color. Resolved/closed tickets of any
   type are ignored.

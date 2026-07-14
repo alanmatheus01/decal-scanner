@@ -2,47 +2,40 @@
   "generated_at": "2026-07-14T00:00:00Z",
   "source": "sample-data",
   "robots": {
-    "ROVER-042": {
+    "ROVER042": {
       "name": "Rover-042",
-      "epic_key": "FLEET-58705",
+      "epic_key": "DEMO-101",
       "epic_status": "In Progress",
-      "location": "MIA-82nd",
       "cone": "purple",
       "action": "Connect to power and ethernet. Ensure offload begins.",
-      "reasons": ["Open Tech Support Service Request: FLEET-58658"],
+      "reasons": ["Open Tech Support Service Request: DEMO-201"],
       "tickets": [
         {
-          "key": "FLEET-58658",
+          "key": "DEMO-201",
           "type": "Tech Support Service Request",
-          "status": "Open",
-          "summary": "Offload sensor logs",
-          "url": "https://example.atlassian.net/browse/FLEET-58658"
+          "status": "Open"
         }
       ]
     },
-    "ROVER-013": {
+    "ROVER013": {
       "name": "Rover-013",
-      "epic_key": "FLEET-46085",
+      "epic_key": "DEMO-102",
       "epic_status": "In Progress",
-      "location": "MIA-20th",
       "cone": "red",
       "action": "Drop off in Fleet Management room.",
-      "reasons": ["Open Task: FLEET-46086"],
+      "reasons": ["Open Task: DEMO-202"],
       "tickets": [
         {
-          "key": "FLEET-46086",
+          "key": "DEMO-202",
           "type": "Task",
-          "status": "Open",
-          "summary": "Return to storage",
-          "url": "https://example.atlassian.net/browse/FLEET-46086"
+          "status": "Open"
         }
       ]
     },
-    "ROVER-099": {
+    "ROVER099": {
       "name": "Rover-099",
-      "epic_key": "FLEET-45184",
+      "epic_key": "DEMO-103",
       "epic_status": "In Progress",
-      "location": "MIA-BrickFLL",
       "cone": "green",
       "action": "Connect to power and ethernet.",
       "reasons": [],

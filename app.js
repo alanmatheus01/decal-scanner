@@ -350,10 +350,7 @@ function showResult(record, fuzzy) {
   els.ticketList.innerHTML = '';
   (record.tickets || []).forEach((t) => {
     const li = document.createElement('li');
-    const link = t.url
-      ? `<a href="${t.url}" target="_blank" rel="noopener">${t.key}</a>`
-      : t.key;
-    li.innerHTML = `${link} &middot; ${t.type} &middot; ${t.status}`;
+    li.textContent = `${t.key} · ${t.type} · ${t.status}`;
     els.ticketList.appendChild(li);
   });
 
