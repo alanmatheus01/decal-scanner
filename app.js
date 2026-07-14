@@ -2,9 +2,20 @@
 
 /* ---------- config ---------- */
 
-// Restrict OCR to characters actually used on decals. Widen this (or set to
-// null) if decals contain other characters.
-const OCR_CHAR_WHITELIST = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789- ';
+// Restrict OCR to characters actually used on decals. Includes lowercase
+// even though matching normalizes to uppercase -- if the whitelist excludes
+// a character that's actually on the decal (e.g. decals use mixed case),
+// Tesseract can't skip it, it's forced to guess the closest *allowed*
+// character, which often produces garbage. Widen further (or set to null)
+// if decals use other characters (e.g. accented letters).
+const OCR_CHAR_WHITELIST = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789- ';
+
+// Tesseract's default page-segmentation mode assumes a full multi-column
+// document and tries to detect its layout -- a well-known cause of garbage
+// output when fed a small cropped snippet instead of a page. '7' means
+// "treat the image as a single text line," which fits a decal name. If
+// names sometimes wrap to two lines, try '6' (single uniform block) instead.
+const OCR_PAGE_SEGMENTATION_MODE = '7';
 
 // Max normalized-edit-distance allowed for a fuzzy match, as a fraction of
 // the candidate name's length (bounded to an integer, min 1).
@@ -269,9 +280,10 @@ document.addEventListener('visibilitychange', () => {
 async function ensureWorker() {
   if (worker) return worker;
   worker = await Tesseract.createWorker('eng');
-  if (OCR_CHAR_WHITELIST) {
-    await worker.setParameters({ tessedit_char_whitelist: OCR_CHAR_WHITELIST });
-  }
+  const params = {};
+  if (OCR_CHAR_WHITELIST) params.tessedit_char_whitelist = OCR_CHAR_WHITELIST;
+  if (OCR_PAGE_SEGMENTATION_MODE) params.tessedit_pageseg_mode = OCR_PAGE_SEGMENTATION_MODE;
+  if (Object.keys(params).length) await worker.setParameters(params);
   return worker;
 }
 
