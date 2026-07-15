@@ -121,9 +121,13 @@ body {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  /* Not mirrored: this is a text-reading tool, not a face selfie -- the
-     agent needs to see the decal in its true orientation to judge whether
-     it's aligned and upright, not flipped for "mirror" comfort. */
+  /* Cosmetic only, for easier hand-eye aiming (moving the decal left in
+     your hand moves it left on screen, like a real mirror). This does NOT
+     affect OCR: canvas.drawImage() reads the video's decoded frame data
+     directly, ignoring any CSS transform on the element -- capture-side
+     orientation is controlled independently by FLIP_CAPTURE_HORIZONTALLY
+     in app.js. */
+  transform: scaleX(-1);
 }
 
 .guide-box {

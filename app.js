@@ -4,7 +4,7 @@
 // step generates it) -- shown in the top bar so you can tell, after a push,
 // once a given phone has actually picked up the new deploy (GitHub Pages
 // propagation + this app's own service-worker caching both add a delay).
-const APP_VERSION = '2026-07-14.2';
+const APP_VERSION = '2026-07-15.1';
 
 /* ---------- config ---------- */
 
