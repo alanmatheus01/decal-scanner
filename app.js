@@ -4,7 +4,7 @@
 // step generates it) -- shown in the top bar so you can tell, after a push,
 // once a given phone has actually picked up the new deploy (GitHub Pages
 // propagation + this app's own service-worker caching both add a delay).
-const APP_VERSION = '2026-07-14.1';
+const APP_VERSION = '2026-07-14.2';
 
 /* ---------- config ---------- */
 
@@ -38,12 +38,14 @@ const CONFUSABLE_DISTANCE_GAP = 2;
 
 // Some browsers/platforms deliver the front camera's MediaStream already
 // mirrored at the frame-data level (independent of any CSS on the <video>
-// element) -- this is inconsistent across browsers. If OCR keeps reading
-// backwards text, this is the fix; flip it off if a device turns out to
-// deliver a true (non-mirrored) stream and this makes things worse. Check
-// the live "Last read" text under the camera view to tell which case you're
-// in after changing this.
-const FLIP_CAPTURE_HORIZONTALLY = true;
+// element) -- this is inconsistent across browsers. Confirmed false (i.e.
+// the raw stream is already true/non-mirrored) on this fleet's phones: OCR
+// was reading correct letters in reversed order (e.g. "Abby" -> "ybbA"),
+// which is what you get when an already-correct frame gets mirrored, not
+// what a genuinely mirrored source looks like (that would also distort the
+// letterforms themselves). If a different device needs this, flip it back
+// to true and check the live "Last read" text under the camera view.
+const FLIP_CAPTURE_HORIZONTALLY = false;
 
 const COUNTER_KEY = 'decalScanner.counter';
 const MUTED_KEY = 'decalScanner.muted';
