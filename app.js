@@ -4,9 +4,16 @@
 // step generates it) -- shown in the top bar so you can tell, after a push,
 // once a given phone has actually picked up the new deploy (GitHub Pages
 // propagation + this app's own service-worker caching both add a delay).
-const APP_VERSION = '2026-07-15.1';
+const APP_VERSION = '2026-07-15.2';
 
 /* ---------- config ---------- */
+
+// robots.json is fetched from a private server (see serve_robots.py),
+// not from this same origin -- robot names/tickets are considered
+// sensitive, so they're never committed to this (public) repo or served
+// from GitHub Pages alongside the app shell. Update this if your Tailscale
+// machine name or serving setup changes.
+const ROBOTS_JSON_URL = 'https://alans-macbook-air.tail2bb3b.ts.net/robots.json';
 
 // Restrict OCR to characters actually used on decals -- letters only (no
 // digits), per the fleet's naming convention. Includes lowercase even
@@ -150,7 +157,7 @@ function keyForMatch(match) {
 
 async function loadRobots() {
   try {
-    const res = await fetch('robots.json', { cache: 'no-store' });
+    const res = await fetch(ROBOTS_JSON_URL, { cache: 'no-store' });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
     robotsByKey = new Map();

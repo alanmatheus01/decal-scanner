@@ -3,25 +3,27 @@
 Nightly Jira -> robots.json sync.
 
 Pulls the fleet's robot Epics (one Epic per robot) plus their open child
-tickets from Jira Cloud, computes a cone color + action per robot, writes
-robots.json, and commits + pushes it if anything changed.
+tickets from Jira Cloud, computes a cone color + action per robot, and
+writes robots.json to a local directory served privately (see
+serve_robots.py) -- this file never touches the git repo or any public
+hosting, since robot names/ticket data are considered private.
 
 Auth: Jira Cloud Basic auth (email + API token). Create a token at
 https://id.atlassian.com/manage-profile/security/api-tokens
 
 Configuration is via environment variables (see env.example) -- deliberately
 never read from a file inside this repo, so the token can't accidentally get
-committed. Real environment variables (already exported, or set by systemd's
-EnvironmentFile) always take precedence. As a convenience for manual runs,
-if ~/.config/decal-scanner/env exists it's loaded for any variables not
-already set in the environment; see README.md for where to put it.
+committed. Real environment variables (already exported, or set by
+launchd's EnvironmentVariables) always take precedence. As a convenience for
+manual runs, if ~/.config/decal-scanner/env exists it's loaded for any
+variables not already set in the environment; see README.md for where to
+put it.
 """
 from __future__ import annotations
 
 import json
 import logging
 import os
-import subprocess
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
@@ -71,9 +73,12 @@ JIRA_CHILD_TYPES = os.environ.get(
 )
 JIRA_EPIC_CHUNK_SIZE = int(os.environ.get("JIRA_EPIC_CHUNK_SIZE", "150"))
 
-REPO_DIR = Path(os.environ.get("REPO_DIR", Path(__file__).parent.parent)).resolve()
-ROBOTS_JSON_PATH = Path(os.environ.get("ROBOTS_JSON_PATH", REPO_DIR / "robots.json"))
-GIT_PUSH = os.environ.get("GIT_PUSH", "true").lower() not in ("0", "false", "no")
+# Lives outside the git repo entirely -- this is the file serve_robots.py
+# serves. Defaults to a plain folder in the home directory; override via env
+# if you'd rather put it elsewhere.
+ROBOTS_JSON_PATH = Path(
+    os.environ.get("ROBOTS_JSON_PATH", str(Path.home() / "decal-scanner-data" / "robots.json"))
+).expanduser()
 
 # Cone priority: purple > red > green. See cone_for_tickets() below.
 PURPLE_TYPES = {"Robot Calibration", "Oncall - Tier 1", "Tech Support Service Request"}
@@ -166,11 +171,10 @@ def fetch_child_tickets(session: requests.Session, epic_keys: list[str]) -> dict
             f"project IN ({projects}) AND parent IN ({parents}) "
             f"AND type IN ({types}) AND statusCategory != Done"
         )
-        # Deliberately not fetching "summary": it's free text written by
-        # staff and could contain anything, the UI never displays it, and
-        # robots.json is world-readable once this repo (or its Pages site)
-        # is public. Same reasoning for not building a Jira browse URL here,
-        # which would otherwise bake the org's Jira domain into a public file.
+        # Not fetching "summary": it's free text written by staff and could
+        # contain anything, and the UI never displays it. Not building a
+        # Jira browse URL either, to avoid baking the org's Jira domain into
+        # a file this app fetches over the network.
         issues = jira_search(session, jql, ["status", "issuetype", "parent"])
         for issue in issues:
             fields = issue["fields"]
@@ -232,40 +236,6 @@ def normalize(name: str) -> str:
 
 
 # ---------------------------------------------------------------------------
-# git
-# ---------------------------------------------------------------------------
-
-
-def git(*args: str) -> subprocess.CompletedProcess:
-    return subprocess.run(["git", "-C", str(REPO_DIR), *args], capture_output=True, text=True)
-
-
-def commit_and_push(robot_count: int, ticket_count: int) -> None:
-    status = git("status", "--porcelain", "--", str(ROBOTS_JSON_PATH.relative_to(REPO_DIR)))
-    if not status.stdout.strip():
-        log.info("robots.json unchanged, nothing to commit")
-        return
-
-    git("add", str(ROBOTS_JSON_PATH.relative_to(REPO_DIR)))
-    message = f"Sync robots.json from Jira ({robot_count} robots, {ticket_count} open tickets)"
-    result = git("commit", "-m", message)
-    if result.returncode != 0:
-        log.error("git commit failed: %s", result.stderr)
-        sys.exit(1)
-    log.info("Committed: %s", message)
-
-    if not GIT_PUSH:
-        log.info("GIT_PUSH disabled, skipping push")
-        return
-
-    result = git("push")
-    if result.returncode != 0:
-        log.error("git push failed: %s", result.stderr)
-        sys.exit(1)
-    log.info("Pushed to remote")
-
-
-# ---------------------------------------------------------------------------
 # main
 # ---------------------------------------------------------------------------
 
@@ -278,10 +248,8 @@ def main() -> None:
 
     ROBOTS_JSON_PATH.parent.mkdir(parents=True, exist_ok=True)
     ROBOTS_JSON_PATH.write_text(json.dumps(payload, indent=2) + "\n")
-    log.info("Wrote %s", ROBOTS_JSON_PATH)
-
     ticket_count = sum(len(v) for v in tickets_by_epic.values())
-    commit_and_push(len(epics), ticket_count)
+    log.info("Wrote %s (%d robots, %d open tickets)", ROBOTS_JSON_PATH, len(epics), ticket_count)
 
 
 if __name__ == "__main__":

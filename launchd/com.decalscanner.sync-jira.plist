@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.decalscanner.sync-jira</string>
+
+  <key>ProgramArguments</key>
+  <array>
+    <string>__HOME__/decal-scanner/scripts/venv/bin/python</string>
+    <string>__HOME__/decal-scanner/scripts/sync_jira.py</string>
+  </array>
+
+  <!-- Runs once nightly at 03:00. launchd catches up on a missed run (e.g.
+       laptop was asleep) the next time it wakes, since RunAtLoad is unset
+       and StartCalendarInterval alone doesn't guarantee catch-up on its
+       own -- if you need a guaranteed catch-up, add RunAtLoad and let
+       sync_jira.py's own idempotent write handle any extra runs. -->
+  <key>StartCalendarInterval</key>
+  <dict>
+    <key>Hour</key>
+    <integer>3</integer>
+    <key>Minute</key>
+    <integer>0</integer>
+  </dict>
+
+  <key>StandardOutPath</key>
+  <string>__HOME__/Library/Logs/decal-scanner-sync.log</string>
+  <key>StandardErrorPath</key>
+  <string>__HOME__/Library/Logs/decal-scanner-sync.log</string>
+</dict>
+</plist>
