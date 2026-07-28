@@ -4,7 +4,7 @@
 // step generates it) -- shown in the top bar so you can tell, after a push,
 // once a given phone has actually picked up the new deploy (GitHub Pages
 // propagation + this app's own service-worker caching both add a delay).
-const APP_VERSION = '2026-07-28.1';
+const APP_VERSION = '2026-07-28.2';
 
 /* ---------- config ---------- */
 
@@ -26,10 +26,17 @@ const OCR_CHAR_WHITELIST = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz
 
 // Tesseract's default page-segmentation mode assumes a full multi-column
 // document and tries to detect its layout -- a well-known cause of garbage
-// output when fed a small cropped snippet instead of a page. '7' means
-// "treat the image as a single text line," which fits a decal name. If
-// names sometimes wrap to two lines, try '6' (single uniform block) instead.
-const OCR_PAGE_SEGMENTATION_MODE = '7';
+// output when fed a photo instead of a page. The guide box covers most of
+// the frame (a robot stopping in front of a door-mounted phone won't land
+// the decal in any precise spot), so the decal could be anywhere in a
+// mostly-blank crop -- '11' means "sparse text: find as much text as
+// possible, in no particular order," which is the right fit for that,
+// unlike '7' (single line) or '6' (single block), which both assume the
+// crop is tightly framed around just the text. If decals ever get
+// misread by picking up other text/markings in the background, '6' is the
+// fallback to try (assumes one block, less prone to picking up scattered
+// unrelated text, but less forgiving of an off-center decal).
+const OCR_PAGE_SEGMENTATION_MODE = '11';
 
 // Max normalized-edit-distance allowed for a fuzzy match, as a fraction of
 // the candidate name's length (bounded to an integer, min 1).

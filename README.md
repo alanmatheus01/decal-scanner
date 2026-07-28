@@ -356,6 +356,16 @@ Run the sync on demand with:
 - OCR character whitelist (`OCR_CHAR_WHITELIST` in `app.js`) currently
   assumes decals are letters, spaces and hyphens only (no digits) — widen
   it if decals use other characters.
+- The guide box (`.guide-box` in `style.css`) covers most of the camera
+  frame on purpose, since a robot stopping in front of a door-mounted phone
+  won't land its decal in any precise spot. This is a real crop region, not
+  just a visual hint — it's paired with `OCR_PAGE_SEGMENTATION_MODE = '11'`
+  ("sparse text") in `app.js`, which is what actually makes OCR tolerant of
+  the decal landing anywhere in that larger, mostly-blank crop. If it ever
+  starts picking up background clutter instead of the decal, `'6'` (single
+  block) is a less-forgiving-but-less-noisy fallback to try; if you shrink
+  the guide box back down to something tightly framed, `'7'` (single line)
+  is the right pairing for that instead.
 - The "robots processed" counter lives in the browser's `localStorage`, per
   device — it does not sync across phones.
 - The Screen Wake Lock API isn't available on all browsers (notably older
