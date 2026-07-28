@@ -4,7 +4,7 @@
 // step generates it) -- shown in the top bar so you can tell, after a push,
 // once a given phone has actually picked up the new deploy (GitHub Pages
 // propagation + this app's own service-worker caching both add a delay).
-const APP_VERSION = '2026-07-15.2';
+const APP_VERSION = '2026-07-28.1';
 
 /* ---------- config ---------- */
 
@@ -56,6 +56,7 @@ const FLIP_CAPTURE_HORIZONTALLY = false;
 
 const COUNTER_KEY = 'decalScanner.counter';
 const MUTED_KEY = 'decalScanner.muted';
+const CAMERA_FACING_KEY = 'decalScanner.cameraFacing';
 
 // This is a hands-free kiosk: the operator holds a decal up to the selfie
 // camera with both hands busy on the robot and just glances at (or listens
@@ -77,6 +78,7 @@ let robotList = [];          // [{normalized, record}]
 let worker = null;
 let videoStream = null;
 let lastOcrText = '';
+let currentFacing = localStorage.getItem(CAMERA_FACING_KEY) || 'user';
 let muted = localStorage.getItem(MUTED_KEY) === '1';
 
 let loopStopRequested = false;
@@ -92,7 +94,7 @@ const els = {};
   'statusOverlay', 'resultContent', 'notFoundContent', 'ambiguousContent',
   'resultName', 'resultEpicKey', 'resultAction', 'fuzzyNotice', 'ticketList',
   'notFoundText', 'ambiguousText', 'ambiguousCandidates', 'ambiguousRsvBtn',
-  'counterValue', 'resetCounterBtn', 'syncStatus', 'muteBtn', 'loopDot', 'appVersion',
+  'counterValue', 'resetCounterBtn', 'syncStatus', 'muteBtn', 'loopDot', 'appVersion', 'switchCameraBtn',
 ].forEach((id) => { els[id] = document.getElementById(id); });
 
 /* ---------- normalization + fuzzy matching ---------- */
@@ -179,13 +181,17 @@ async function loadRobots() {
 /* ---------- camera ---------- */
 
 async function startCamera() {
+  if (videoStream) {
+    videoStream.getTracks().forEach((track) => track.stop());
+    videoStream = null;
+  }
   try {
     videoStream = await navigator.mediaDevices.getUserMedia({
-      video: { facingMode: 'user', width: { ideal: 1280 }, height: { ideal: 960 } },
+      video: { facingMode: currentFacing, width: { ideal: 1280 }, height: { ideal: 960 } },
       audio: false,
     });
   } catch (err) {
-    console.warn('front camera unavailable, falling back', err);
+    console.warn(`${currentFacing} camera unavailable, falling back`, err);
     try {
       videoStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
     } catch (err2) {
@@ -196,7 +202,16 @@ async function startCamera() {
     }
   }
   els.video.srcObject = videoStream;
+  // Mirroring is a "selfie" convention for the front camera only -- the
+  // rear camera is a normal viewfinder and shouldn't be flipped.
+  els.video.classList.toggle('mirrored', currentFacing === 'user');
   return true;
+}
+
+async function switchCamera() {
+  currentFacing = currentFacing === 'user' ? 'environment' : 'user';
+  localStorage.setItem(CAMERA_FACING_KEY, currentFacing);
+  await startCamera();
 }
 
 // Maps the on-screen guide box (CSS pixels, drawn over a video element using
@@ -487,6 +502,7 @@ els.resetCounterBtn.addEventListener('click', () => {
 });
 
 els.muteBtn.addEventListener('click', () => setMuted(!muted));
+els.switchCameraBtn.addEventListener('click', () => switchCamera());
 
 els.manualInput.addEventListener('input', (e) => renderManualResults(e.target.value));
 

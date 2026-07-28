@@ -83,7 +83,11 @@ the common case:
   tapping "none of these — create RSV"), the manual-search fallback if OCR
   can't get a clean read, and tapping anywhere on a result to dismiss it
   early instead of waiting for the auto-reset. None of these are part of
-  the common per-robot path.
+  the common per-robot path. The front/rear camera-switch button (top-right
+  of the camera view) is a one-time setup choice, not a per-scan action --
+  the front camera is the default (so the agent can see the screen while
+  aiming), with rear as a fallback if it gives better focus/framing for a
+  given phone or mounting position. The choice persists in `localStorage`.
 
 Tuning knobs, all in `app.js`: `CONFIRM_FRAMES`, `EMPTY_RESET_FRAMES`,
 `LOOP_YIELD_MS` (delay between OCR attempts).
