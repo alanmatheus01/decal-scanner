@@ -197,8 +197,20 @@ page loaded from a public address (GitHub Pages) fetching it gets an extra
 preflight carrying `Access-Control-Request-Private-Network`, which the
 server must explicitly allow via `Access-Control-Allow-Private-Network:
 true` or the browser blocks the request with a CORS error mentioning "local
-address space" — `serve_robots.py` sends this already, but it's worth
-knowing about if you ever rewrite that server.
+address space" — `serve_robots.py` sends this already.
+
+That header alone wasn't enough, though: this permission can only be
+granted in a page-level fetch context, not from inside a service worker's
+background fetch (there's no UI for Chrome to prompt through). `sw.js`
+used to intercept the `robots.json` request for network-first caching,
+which meant the actual network call happened *inside* the service worker
+-- silently denied every time, correct header or not. Fixed by having
+`sw.js` not intercept this request at all (no `respondWith()` for it), so
+it goes out as a plain fetch from the page, same as if there were no
+service worker. Cost: no offline cache fallback for `robots.json`
+specifically (the app shell and Tesseract assets still get their normal
+caching) -- acceptable, since `app.js`'s own fetch already uses
+`cache: 'no-store'` and the UI already handles a failed fetch gracefully.
 
 ### Setup (macOS + Tailscale)
 

@@ -34,18 +34,17 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
 
-  // robots.json: network-first so operators get fresh data, fall back to
-  // cache when offline.
+  // robots.json lives on a different (private, Tailscale-only) origin.
+  // Deliberately NOT intercepted here: Chrome's Private Network Access
+  // check can only be granted in a page-level fetch context, not from
+  // inside a service worker's background fetch (there's no UI to prompt
+  // through), so proxying this through the SW gets it silently denied even
+  // with the right CORS headers. Not calling respondWith() lets the
+  // browser handle it exactly as if the page had called fetch() directly,
+  // with no SW involved -- this does mean no offline cache fallback for
+  // robots.json specifically; app.js's own fetch already uses
+  // cache: 'no-store', so this doesn't change its network-first behavior.
   if (url.pathname.endsWith('robots.json')) {
-    event.respondWith(
-      fetch(event.request)
-        .then((res) => {
-          const copy = res.clone();
-          caches.open(RUNTIME_CACHE).then((cache) => cache.put(event.request, copy));
-          return res;
-        })
-        .catch(() => caches.match(event.request))
-    );
     return;
   }
 
