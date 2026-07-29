@@ -191,6 +191,15 @@ address would be blocked outright as mixed content (this is also why
 camera access needs HTTPS in the first place). So HTTPS on the private
 side is required, not optional.
 
+Chrome (not Safari) also enforces **Private Network Access**: since
+Tailscale's address range counts as "private" the same way a LAN IP does, a
+page loaded from a public address (GitHub Pages) fetching it gets an extra
+preflight carrying `Access-Control-Request-Private-Network`, which the
+server must explicitly allow via `Access-Control-Allow-Private-Network:
+true` or the browser blocks the request with a CORS error mentioning "local
+address space" — `serve_robots.py` sends this already, but it's worth
+knowing about if you ever rewrite that server.
+
 ### Setup (macOS + Tailscale)
 
 1. **Confirm Tailscale can issue you a cert.** MagicDNS + the tailnet's

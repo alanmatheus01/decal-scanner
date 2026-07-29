@@ -44,6 +44,13 @@ class RobotsJsonHandler(BaseHTTPRequestHandler):
         self.send_header("Access-Control-Allow-Origin", SERVE_ALLOWED_ORIGIN)
         self.send_header("Access-Control-Allow-Methods", "GET, OPTIONS")
         self.send_header("Vary", "Origin")
+        # Chrome's Private Network Access check: a page loaded from a public
+        # address (GitHub Pages) fetching a private/local address (this
+        # server's Tailscale IP falls in the CGNAT range, which counts as
+        # private) gets an extra preflight with
+        # Access-Control-Request-Private-Network, which the response must
+        # explicitly allow or the browser blocks the request outright.
+        self.send_header("Access-Control-Allow-Private-Network", "true")
 
     def do_OPTIONS(self) -> None:
         self.send_response(204)
