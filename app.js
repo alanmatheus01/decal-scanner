@@ -4,7 +4,7 @@
 // step generates it) -- shown in the top bar so you can tell, after a push,
 // once a given phone has actually picked up the new deploy (GitHub Pages
 // propagation + this app's own service-worker caching both add a delay).
-const APP_VERSION = '2026-07-29.2';
+const APP_VERSION = '2026-07-29.3';
 
 /* ---------- config ---------- */
 
@@ -49,6 +49,21 @@ const FUZZY_MAX_DISTANCE_RATIO = 0.25;
 // stops and asks the operator to pick, since decals are frequently damaged
 // or missing letters in this fleet.
 const CONFUSABLE_DISTANCE_GAP = 2;
+
+// Jira epic names often carry a trailing numeric ID (e.g. "Xuan-2215") that
+// uniquely identifies that epic, but isn't necessarily printed on the
+// physical decal -- decals show just the callsign ("Xuan"). Stripped for
+// matching purposes only; the full name (with ID) is still what's shown
+// once a match is confirmed, and still what's used to key dedup/counting,
+// so two epics that share a callsign but differ by ID are correctly
+// treated as distinct identities -- and, correctly, as ambiguous to OCR
+// alone, since decal text can't tell them apart either. Widen this if the
+// fleet's naming convention turns out not to be a simple numeric suffix.
+const DECAL_NAME_SUFFIX_PATTERN = /-\d+$/;
+
+function decalName(fullName) {
+  return (fullName || '').replace(DECAL_NAME_SUFFIX_PATTERN, '');
+}
 
 // Some browsers/platforms deliver the front camera's MediaStream already
 // mirrored at the frame-data level (independent of any CSS on the <video>
@@ -182,7 +197,7 @@ async function loadRobots() {
     robotList = [];
     const entries = Object.values(data.robots || {});
     for (const record of entries) {
-      const normalized = normalize(record.name);
+      const normalized = normalize(decalName(record.name));
       robotsByKey.set(normalized, record);
       robotList.push({ normalized, record });
     }

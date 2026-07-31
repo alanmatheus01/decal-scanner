@@ -386,6 +386,15 @@ Run the sync on demand with:
 - OCR character whitelist (`OCR_CHAR_WHITELIST` in `app.js`) currently
   assumes decals are letters, spaces and hyphens only (no digits) — widen
   it if decals use other characters.
+- Jira epic names often carry a trailing numeric ID (e.g. "Xuan-2215") that
+  isn't printed on the physical decal. `decalName()` in `app.js` strips a
+  trailing `-<digits>` suffix for matching purposes only — the full name
+  (with ID) is still what's displayed and counted once a match is
+  confirmed. If two epics share a callsign with different IDs, OCR alone
+  can't tell them apart either, so that correctly falls back to the
+  "multiple close matches" picker rather than guessing. Adjust
+  `DECAL_NAME_SUFFIX_PATTERN` if the fleet's naming convention turns out to
+  be something other than a simple numeric suffix.
 - The guide box (`.guide-box` in `style.css`) is wide and short on purpose,
   not a big square — robots are all roughly the same height, so where the
   decal lands vertically is fairly predictable, but horizontal position
