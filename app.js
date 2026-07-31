@@ -4,7 +4,7 @@
 // step generates it) -- shown in the top bar so you can tell, after a push,
 // once a given phone has actually picked up the new deploy (GitHub Pages
 // propagation + this app's own service-worker caching both add a delay).
-const APP_VERSION = '2026-07-29.1';
+const APP_VERSION = '2026-07-29.2';
 
 /* ---------- config ---------- */
 
@@ -89,7 +89,7 @@ let currentFacing = localStorage.getItem(CAMERA_FACING_KEY) || 'user';
 let muted = localStorage.getItem(MUTED_KEY) === '1';
 
 let loopStopRequested = false;
-let pendingNorm = null;
+let pendingKey = null;
 let pendingCount = 0;
 let emptyStreak = 0;
 let currentKey = null; // identity of whatever is currently shown on the overlay
@@ -156,10 +156,19 @@ function findMatch(rawText) {
   return { status: best.dist === 0 ? 'exact' : 'fuzzy', record: best.record };
 }
 
-function keyForMatch(match) {
+// `norm` is used as the key for an unmatched ('none') read, since there's
+// no resolved identity to key on instead -- see scanLoop() for why the
+// debounce is keyed on this (match-aware) identity rather than the raw OCR
+// text: text.trim() can vary slightly frame to frame (whitespace, a
+// spurious stray character) even when pointed at the same decal,
+// especially with OCR_PAGE_SEGMENTATION_MODE set to sparse-text mode; a
+// resolved match already tolerates that kind of noise via fuzzy matching,
+// so debouncing on it is far more reliable than requiring the literal text
+// to read identically twice in a row.
+function keyForMatch(match, norm) {
   if (match.status === 'exact' || match.status === 'fuzzy') return `r:${normalize(match.record.name)}`;
   if (match.status === 'ambiguous') return `a:${match.candidates.map((c) => normalize(c.name)).sort().join(',')}`;
-  return null;
+  return `n:${norm}`;
 }
 
 /* ---------- robots.json loading ---------- */
@@ -342,7 +351,7 @@ async function scanLoop() {
 
       if (!norm) {
         emptyStreak++;
-        pendingNorm = null;
+        pendingKey = null;
         pendingCount = 0;
         if (emptyStreak >= EMPTY_RESET_FRAMES && currentKey !== null) {
           currentKey = null;
@@ -350,15 +359,15 @@ async function scanLoop() {
         }
       } else {
         emptyStreak = 0;
-        if (norm === pendingNorm) {
+        const match = findMatch(raw);
+        const key = keyForMatch(match, norm);
+        if (key === pendingKey) {
           pendingCount++;
         } else {
-          pendingNorm = norm;
+          pendingKey = key;
           pendingCount = 1;
         }
         if (pendingCount >= CONFIRM_FRAMES) {
-          const match = findMatch(raw);
-          const key = keyForMatch(match);
           if (key !== currentKey) {
             currentKey = key;
             handleMatch(match, raw);

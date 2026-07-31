@@ -53,10 +53,19 @@ the common case:
   background the whole time the app is open, OCRing frames roughly every
   150ms + however long `Tesseract.recognize()` takes.
 - **Debounced, not instant.** A reading only "commits" (updates the screen,
-  speaks, increments the counter) after it's been read the same way for
-  `CONFIRM_FRAMES` (2) loop iterations in a row. This filters out one-off
-  OCR noise from an empty or incidental camera view — it does not act on
-  the first frame it sees.
+  speaks, increments the counter) after it resolves to the same identity
+  for `CONFIRM_FRAMES` (2) loop iterations in a row. This filters out
+  one-off OCR noise from an empty or incidental camera view — it does not
+  act on the first frame it sees. The debounce is keyed on the *resolved
+  match*, not the literal OCR text: `text.trim()` can vary slightly frame
+  to frame (whitespace, a stray character) even pointed at the same decal,
+  especially with `OCR_PAGE_SEGMENTATION_MODE` set to sparse-text mode — a
+  resolved match already tolerates that via fuzzy matching, so debouncing
+  on it is far more reliable than requiring the literal text twice in a
+  row. Unmatched ("not recognized") reads are the one exception -- those
+  debounce on the literal text itself, since there's no resolved identity
+  to key on, and it keeps random background noise from flashing the RSV
+  screen.
 - **No double-counting while a decal sits in frame.** Once a reading
   commits, the app remembers it (`currentKey`) and won't re-trigger or
   re-count for the same robot while it's still being held up to the camera.
